@@ -1,0 +1,134 @@
+<!doctype html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+    <title>jsMind</title>
+    <link type="text/css" rel="stylesheet" href="style/jsmind.css"/>
+    <style type="text/css">
+        #jsmind_container {
+            width: 99.5%;
+            height: 94vh;
+            border: solid 1px #ccc;
+            background: #f4f4f4;
+        }
+    </style>
+</head>
+<body>
+<div id="jsmind_container"></div>
+<script type="text/javascript" src="js/jsmind.js"></script>
+<script type="text/javascript" src="js/jsmind.draggable.js"></script>
+<script src="../../config/config.js"></script>
+<script src="http://cdn.bootcss.com/jquery/1.12.3/jquery.min.js"></script>
+<script src="../../third-party/layer/layer.js"></script>
+<script type="text/javascript">
+    $(function () {
+        let options = {
+            container: 'jsmind_container',
+            editable: true,
+            theme: 'default',
+        };
+        let mind = {
+            "meta": {
+                "name": "世界树",
+                "author": "wordOfTree",
+                "version": "0.0.1",
+            },
+            "format": "node_array",
+            "data": [
+                {"id": "root", "isroot": true, "topic": "jsMind"},
+                {"id": window.top.account, "parentid": "root", "topic": window.top.account}
+            ]
+        };
+        let jm = new jsMind(options);
+        jm.show(mind);
+
+        function initData() {
+            $.ajax({
+                type: "GET",
+                url: ossFilePrefix + window.top.account + "?randomCode=" + new Date().getTime(),
+                success: function (data) {
+                    if (!data || data.trim().length < 1) return;
+                    jm.show(JSON.parse(data));
+                },
+                error: function (e) {
+                    layer.msg("请求失败,请检查网络");
+                }
+            });
+        }
+
+        initData();
+
+        function updateDataGraph() {
+            jm.end_edit();
+            const contentData = JSON.stringify(jm.get_data());
+            console.log("contentData:" + contentData);
+            const updateDataUrl = serverIp + "/updateDataGraph";
+            console.log(window.top.account, window.top.token)
+            $.ajax({
+                type: "POST",
+                url: updateDataUrl,
+                data: {content: contentData},
+                headers: {
+                    account: window.top.account || '',
+                    token: window.top.token || '',
+                },
+                success: function (data) {
+                    console.log(data);
+                    if (data && data.token) {
+                        window.token = data.token;
+                        window.account = account;
+                    }
+                    layer.msg(data.message);
+                },
+                error: function (e) {
+                    console.log(e);
+                    if (e && e.responseJSON && e.responseJSON.message) {
+                        layer.msg(e.responseJSON.message);
+                    } else {
+                        layer.msg("请求失败了,可能是网络问题");
+                    }
+                }
+            });
+        }
+
+        document.onkeydown = function (e) {
+            const registerKeyCodeEvent = {
+                83: updateDataGraph
+            }
+            const keyCodeArr = [
+                , 83 /*保存文章内容'S'*/
+            ];
+            const keyCode = e.keyCode;
+            if (e.ctrlKey && keyCodeArr.indexOf(keyCode) > -1) {
+                if (registerKeyCodeEvent[keyCode]) {
+                    registerKeyCodeEvent[keyCode]();
+                }
+                return false;
+            }
+            return true;
+        }
+        let writeFrameWindow = parent.window.document.getElementById("writeFrame").contentWindow;
+        document.onclick = function (e) {
+            if (!e.ctrlKey) return true;
+            let targetCliker = e.target;
+            if (targetCliker.tagName.toLowerCase() == "jmnode") {
+                let nodeId = $(targetCliker).attr("nodeid");
+                if (nodeId == "root" || nodeId == window.top.account) return true;
+                writeFrameWindow.fileId = nodeId;
+                let shadeIndex = layer.load(0, {shade: false});
+                writeFrameWindow.initData();
+                layer.close(shadeIndex);
+            }
+        }
+    })
+</script>
+<style>
+    body {
+        margin: 0px;
+        padding: 0px;
+        border: 0px;
+    }
+</style>
+</body>
+</html>

@@ -1,0 +1,13 @@
+# 刚开始部署的时候
+## 修改权限
+chmod 777 autoDeploy
+
+## 后台运行
+nohup ./autoDeploy &
+
+# 运行一段时间后
+## 查看运行的进程号
+ps aux|grep autoDeploy
+
+## 强制关闭进程
+kill -9 上面查询出来的进程号

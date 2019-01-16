@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>人人书</title>
+    <script src="http://cdn.bootcss.com/jquery/1.12.3/jquery.min.js"></script>
+    <script src="third-party/layer/layer.js"></script>
+    <script src="config/config.js"></script>
+    <script>
+        window.token = '' || false;
+        window.account = "tristan";
+        if (!window.token) {
+            layer.ready(function () {
+                layer.prompt({
+                        title: '用户口令'
+                        , formType: 1
+                        ,value:"tristan_1"
+                    }
+                    , function (pass, index) {
+                        layer.close(index);
+                        pass = pass.trim();
+                        if (pass.length < 1) return layer.msg("口令不能为空");
+                        const ap = pass.split("_");
+                        if (!(ap && ap.length > 0)) return layer.msg("口令不能为空");
+                        let account = ap[0];
+                        let password = ap[1];
+                        if (!account || !password) return layer.msg("口令不能为空");
+                        account = account.trim();
+                        password = password.trim();
+                        if (account.length < 1 || password.length < 1) return layer.msg("口令不能为空");
+
+                        const loginUrl = serverIp + "/verifyKey";
+
+                        $.ajax({
+                            type: "POST",
+                            url: loginUrl,
+                            data: {account: account, password: password},
+                            success: function (data) {
+                                if (data && data.token) {
+                                    window.token = data.token;
+                                    window.account = data.account;
+                                }
+                                layer.msg("成功进入系统");
+                            },
+                            error: function (e) {
+                                if (e && e.responseJSON && e.responseJSON.message) {
+                                    layer.msg(e.responseJSON.message);
+                                } else {
+                                    layer.msg("请求失败了,请检查网络");
+                                }
+                            }
+                        });
+                    }
+                );
+            })
+        }
+    </script>
+    <style>
+        body {
+            margin: 0px;
+            padding: 0px;
+            border: 0px;
+        }
+    </style>
+</head>
+<body>
+<iframe src="component/writer/index.html" id="writeFrame" style="width: 100%;height: 70vh;display: inline;"></iframe>
+<iframe src="component/designer/index.html" id="dataGraphFrame"
+        style="width: 100%;height: 27vh;display: inline;"></iframe>
+</body>
+</html>
